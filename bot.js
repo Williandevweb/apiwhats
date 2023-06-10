@@ -25,9 +25,9 @@ function delay(t, v) {
 const createConnection = async () => {
 	return await mysql.createConnection({
 		host: 'localhost',
-		user: 'alavancawebch5YS',
-		password: 'FMm4UJ5hG7ujn2iAYqpfwBXr',
-		database: 'alavancaweb_com_br_Udrlnuhc'
+		user: 'root',
+		password: '',
+		database: 'whats'
 	});
 }
 
@@ -44,11 +44,11 @@ app.use(fileUpload({
   debug: false
 }));
 
-app.get('/', (req, res) => {
-  res.sendFile('index.html', {
-    root: __dirname
-  });
-});
+// app.get('/', (req, res) => {
+//   res.sendFile('index.html', {
+//     root: __dirname
+//   });
+// });
 
 const sessions = [];
 const SESSIONS_FILE = './whatsapp-sessions.json';
@@ -268,9 +268,10 @@ const criarSessao = function(id, token,ativo) {
   });
 
   client.on('message', async(msg) => {
-  
+    
     async function salvaContato(dados){
       try{
+
         nomeContato = msg._data.notifyName;        
         const user = msg.from.replace(/\D/g, '');  
         const getUserFrom = await getUser(user);    
@@ -325,13 +326,15 @@ const criarSessao = function(id, token,ativo) {
     async function buscaMensagens(){
       const mensagens = await getMens(cod_estabel);
 
-      mensagens.forEach(function (mensagens){
-        if(mensagens.status !== 'Inativo'){
-          if(msg.body.toLocaleLowerCase().includes(mensagens.pergunta.toLocaleLowerCase())){
-            client.sendMessage(msg.from, mensagens.resposta);
+      if(mensagens !== "false"){
+        mensagens.forEach(function (mensagens){
+          if(mensagens.status !== 'Inativo'){
+            if(msg.body.toLocaleLowerCase().includes(mensagens.pergunta.toLocaleLowerCase())){
+              client.sendMessage(msg.from, mensagens.resposta);
+            }
           }
-        }
-      });
+        });
+      }
     }
 
     async function horarioFunc(){
