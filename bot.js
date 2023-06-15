@@ -25,9 +25,9 @@ function delay(t, v) {
 const createConnection = async () => {
 	return await mysql.createConnection({
 		host: 'localhost',
-		user: 'alavancawebch5YS',
-		password: 'FMm4UJ5hG7ujn2iAYqpfwBXr',
-		database: 'alavancaweb_com_br_Udrlnuhc'
+		user: 'portalalavan5JwT',
+		password: 'qRX2JaQpFVy57G8b1W9zfHAL',
+		database: 'portal_alavancaweb_com_br_anJUWDKO'   
 	});
 }
 
