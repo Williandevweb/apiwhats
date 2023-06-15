@@ -5,7 +5,7 @@ const socketIO = require('socket.io');
 const qrcode = require('qrcode');
 const http = require('http');
 const fileUpload = require('express-fileupload');
-const port = process.env.PORT || 8005;
+const port = process.env.PORT || 8005;  //####### Colocar a proxima porta 8006 8007 etc
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
@@ -14,7 +14,7 @@ const mysql = require('mysql2/promise');
 const { stringify } = require('querystring');
 const dirQrCode = './qrcode';
 var nomeContato = "";
-var cod_estabel = 1;
+var cod_estabel = 1;  //#######Colocar aqui o código da empresa do cliente
 
 function delay(t, v) {
   return new Promise(function(resolve) { 
@@ -25,9 +25,9 @@ function delay(t, v) {
 const createConnection = async () => {
 	return await mysql.createConnection({
 		host: 'localhost',
-		user: 'root',
-		password: '',
-		database: 'whats'
+		user: 'alavancawebch5YS',
+		password: 'FMm4UJ5hG7ujn2iAYqpfwBXr',
+		database: 'alavancaweb_com_br_Udrlnuhc'
 	});
 }
 
@@ -44,11 +44,9 @@ app.use(fileUpload({
   debug: false
 }));
 
-// app.get('/', (req, res) => {
-//   res.sendFile('index.html', {
-//     root: __dirname
-//   });
-// });
+app.get('/', (req, res) => {
+  res.send('Conectado');
+});
 
 const sessions = [];
 const SESSIONS_FILE = './whatsapp-sessions.json';
@@ -207,6 +205,7 @@ const criarSessao = function(id, token,ativo) {
     restartOnAuthFail: true,
     puppeteer: {
       headless: true,
+      executablePath: '/usr/bin/google-chrome-stable',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
