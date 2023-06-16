@@ -22,14 +22,25 @@ function delay(t, v) {
   });
 }
 
+//##Configuração Local
 const createConnection = async () => {
 	return await mysql.createConnection({
 		host: 'localhost',
-		user: 'portalalavan5JwT',
-		password: 'qRX2JaQpFVy57G8b1W9zfHAL',
-		database: 'portal_alavancaweb_com_br_anJUWDKO'   
+		user: 'root',
+		password: '',
+		database: 'whats'   
 	});
 }
+
+//## Configuração VPS
+// const createConnection = async () => {
+// 	return await mysql.createConnection({
+// 		host: 'localhost',
+// 		user: 'portalalavan5JwT',
+// 		password: 'qRX2JaQpFVy57G8b1W9zfHAL',
+// 		database: 'portal_alavancaweb_com_br_anJUWDKO'   
+// 	});
+// }
 
 if (!fs.existsSync(dirQrCode)){
   fs.mkdirSync(dirQrCode)
@@ -205,7 +216,7 @@ const criarSessao = function(id, token,ativo) {
     restartOnAuthFail: true,
     puppeteer: {
       headless: true,
-      executablePath: '/usr/bin/google-chrome-stable',
+      //executablePath: '/usr/bin/google-chrome-stable',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -395,7 +406,7 @@ const criarSessao = function(id, token,ativo) {
       }     
     }
 
-    if (msg.type.toLocaleLowerCase() !== "ciphertext" && msg.type.toLocaleLowerCase() !== "e2e_notification" & msg.type.toLocaleLowerCase() !== ""){
+    if (msg.body !== null && !msg.from.includes('@g.us') && msg.type.toLocaleLowerCase() !== "ciphertext" && msg.type.toLocaleLowerCase() !== "e2e_notification" && msg.type.toLocaleLowerCase() !== ""){
       
       horarioFunc();
       
