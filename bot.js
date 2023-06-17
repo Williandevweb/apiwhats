@@ -335,15 +335,22 @@ const criarSessao = function(id, token,ativo) {
 
     async function buscaMensagens(){
       const mensagens = await getMens(cod_estabel);
+      var mensUnica = "";
 
       if(mensagens !== "false"){
         mensagens.forEach(function (mensagens){
           if(mensagens.status !== 'Inativo'){
             if(msg.body.toLocaleLowerCase().includes(mensagens.pergunta.toLocaleLowerCase())){
-              client.sendMessage(msg.from, mensagens.resposta);
+
+              mensUnica = mensagens.resposta;
+              
             }
           }
         });
+
+        if(mensUnica !== ""){
+          client.sendMessage(msg.from, mensUnica);
+        }       
       }
     }
 
