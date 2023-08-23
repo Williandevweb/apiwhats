@@ -5,7 +5,7 @@ const socketIO = require('socket.io');
 const qrcode = require('qrcode');
 const http = require('http');
 const fileUpload = require('express-fileupload');
-const port = process.env.PORT || 8005;  //####### Colocar a proxima porta 8006 8007 etc
+const port = process.env.PORT || 8009;  //####### Colocar a proxima porta 8006 8007 etc
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
@@ -13,8 +13,6 @@ const fs = require('fs');
 const mysql = require('mysql2/promise');
 const { stringify } = require('querystring');
 const dirQrCode = './qrcode';
-var nomeContato = "";
-var cod_estabel = 1;  //#######Colocar aqui o código da empresa do cliente
 
 function delay(t, v) {
   return new Promise(function(resolve) { 
@@ -28,19 +26,19 @@ function delay(t, v) {
 // 		host: 'localhost',
 // 		user: 'root',
 // 		password: '',
-// 		database: 'teste'   
+// 		database: 'alavanca_WSystem'   
 // 	});
 // }
 
 //## Configuração VPS
-// const createConnection = async () => {
-// 	return await mysql.createConnection({
-// 		host: 'localhost',
-// 		user: 'alavanca_wsystem',
-// 		password: 'y53X6Y8pk^wX',
-// 		database: 'alavanca_WSystem'   
-// 	});
-// }
+const createConnection = async () => {
+	return await mysql.createConnection({
+		host: 'localhost',
+		user: 'alavanca_wsystem',
+		password: 'y53X6Y8pk^wX',
+		database: 'alavanca_wsystem'   
+	});
+}
 
 if (!fs.existsSync(dirQrCode)){
   fs.mkdirSync(dirQrCode)
@@ -107,116 +105,117 @@ const savedSessions = carregarArquivoSessao();
 const sessionIndex = savedSessions.findIndex(sess => sess.id);
 const tok = savedSessions.splice(sessionIndex, 1)[0];
 
-// const getUser = async (msgfom) => {
-// 	const connection = await createConnection();
-// 	const [rows] = await connection.execute('SELECT * FROM clientes_whats WHERE celular = ?', [msgfom]);
-//   delay(1000).then(async function() {
-// 		 connection.end();
-// 		delay(500).then(async function() {
-// 			 connection.destroy();
-// 		});
-// 	});
-// 	if (rows.length > 0) {
-//       return rows[0].data_interacao;
-//   }
-// 	return "false";
-// }
+const getContatos = async (celular) => {
+	const connection = await createConnection();
+	const [rows] = await connection.execute('SELECT * FROM whats_app_contatos WHERE whats_app_contatos.celular = ?', [celular]);
+  delay(1000).then(async function() {
+		 connection.end();
+		delay(500).then(async function() {
+			 connection.destroy();
+		});
+	});
+	if (rows.length > 0) {
+      return rows;
+  }else{
+	  return "false";
+  }
+}
 
-// const getPeriod = async (cod_estabel) => {
-// 	const connection = await createConnection();
-// 	const [rows] = await connection.execute('SELECT * FROM saudacoes WHERE cod_estabel = ?', [cod_estabel]);
-//   delay(1000).then(async function() {
-// 		 connection.end();
-// 		delay(500).then(async function() {
-// 			 connection.destroy();
-// 		});
-// 	});
-// 	if (rows.length > 0) {
-//     const saudacaoPeriodicidade = [rows[0].periodicidade, rows[0].saudacao];
-//       return saudacaoPeriodicidade;
-//   }
-// 	return "false";
-// }
+const postContatos = async (celular, nome, data) => {
+	const connection = await createConnection();
+  const [rows] = await connection.execute('INSERT INTO `whats_app_contatos` (`id`,`nome`, `celular`, `data_saudacao`, `data_ausencia`) VALUES (NULL,?,?,?,?)', [nome,celular,data,data]);                             
+  delay(1000).then(async function() {
+    connection.end();
+   delay(500).then(async function() {
+      connection.destroy();
+   });
+ });
+ if (rows.length > 0) { 
+  return "true";
+ }
+ return "false";
+}
 
-// const getMens = async (cod_estabel) => {
-// 	const connection = await createConnection();
-// 	const [rows] = await connection.execute('SELECT * FROM mensagens WHERE cod_estabel = ?', [cod_estabel]);
-//   delay(1000).then(async function() {
-// 		 connection.end();
-// 		delay(500).then(async function() {
-// 			 connection.destroy();
-// 		});
-// 	});
-// 	if (rows.length > 0) {
-//       return rows;
-//   }
-// 	return "false";
-// }
+const putContatos = async (celular, dataUpdate, tipoSaudacaoAusencia) => {
+	const connection = await createConnection();
+  var rows = [];
 
-// const getHorarioFunc = async (cod_estabel, diaSemana) => {
-// 	const connection = await createConnection();
-// 	const [rows] = await connection.execute('SELECT * FROM ' + diaSemana + ' WHERE cod_estabel = ?', [cod_estabel]);
-//   delay(1000).then(async function() {
-// 		 connection.end();
-// 		delay(500).then(async function() {
-// 			 connection.destroy();
-// 		});
-// 	});
-// 	if (rows.length > 0) {
-//       return rows;
-//   }
-// 	return "false";
-// }
+  if(tipoSaudacaoAusencia == 'saudacao'){
+    rows = await connection.execute('UPDATE whats_app_contatos SET data_saudacao = NOW() WHERE celular = ?;', [dataUpdate, celular]);   
+  }else{
+    rows = await connection.execute('UPDATE whats_app_contatos SET data_ausencia = NOW() WHERE celular = ?;', [dataUpdate, celular]);   
+  }                          
+  delay(1000).then(async function() {
+    connection.end();
+   delay(500).then(async function() {
+      connection.destroy();
+   });
+ });
+ if (rows.length > 0) {
+  return "true";
+ }
+  return "false";
+}
 
-// const getAusencia = async (cod_estabel) => {
-// 	const connection = await createConnection();
-// 	const [rows] = await connection.execute('SELECT * FROM ausencias WHERE cod_estabel = ?', [cod_estabel]);
-//   delay(1000).then(async function() {
-// 		 connection.end();
-// 		delay(500).then(async function() {
-// 			 connection.destroy();
-// 		});
-// 	});
-// 	if (rows.length > 0) {
-//       return rows[0].ausencia;
-//   }
-// 	return "false";
-// }
+const getMensagens = async () => {
+	const connection = await createConnection();
+	const [rows] = await connection.execute('SELECT * FROM whats_app_mensagens');
+  delay(1000).then(async function() {
+		 connection.end();
+		delay(500).then(async function() {
+			 connection.destroy();
+		});
+	});
+	if (rows.length > 0) {
+      return rows;
+  }
+	return "false";
+}
 
-// const setUser = async (msgfom, nome, data, cod_estabel) => {
-// 	const connection = await createConnection();
-//   const [rows] = await connection.execute('INSERT INTO `clientes_whats` (`id`,`nome`, `celular`, `data_interacao`, `cod_estabel`) VALUES (NULL,?,?,?,?)', [nome,msgfom,data,cod_estabel]);                             
-//   delay(1000).then(async function() {
-//     connection.end();
-//    delay(500).then(async function() {
-//       connection.destroy();
-//    });
-//  });
-//  if (rows.length > 0) return true;
+const getHorarioFunc = async (diaSemana) => {
+	const connection = await createConnection();
+	const [rows] = await connection.execute('SELECT * FROM funcionamento_deliveries WHERE dia = ?', [diaSemana]);
+  delay(1000).then(async function() {
+		 connection.end();
+		delay(500).then(async function() {
+			 connection.destroy();
+		});
+	});
+	if (rows.length > 0) {
+      return rows;
+  }
+	return "false";
+}
 
-//  return false;
-// }
-
-// const updateDateUser = async (msgfom, data) => {
-// 	const connection = await createConnection();
-//   const [rows] = await connection.execute('UPDATE clientes_whats SET data_interacao = ? WHERE clientes_whats.celular = ?;', [data, msgfom]);                             
-//   delay(1000).then(async function() {
-//     connection.end();
-//    delay(500).then(async function() {
-//       connection.destroy();
-//    });
-//  });
-//  if (rows.length > 0) return "true";
-
-//  return "false";
-// }
+const getSaudacaoAusencia = async () => {
+	const connection = await createConnection();
+	const [rows] = await connection.execute('SELECT * FROM whats_app_saudacao_ausencias');
+  delay(1000).then(async function() {
+		 connection.end();
+		delay(500).then(async function() {
+			 connection.destroy();
+		});
+	});
+	if (rows.length > 0) {
+      return rows;
+  }
+	return "false";
+}
 
 const criarSessao = function(id, token,ativo) {
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
       headless: true,
-      //executablePath: '/usr/bin/google-chrome-stable',
+    // CAMINHO DO CHROME PARA WINDOWS (REMOVER O COMENTÁRIO ABAIXO)
+    //executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    //===================================================================================
+    // CAMINHO DO CHROME PARA MAC (REMOVER O COMENTÁRIO ABAIXO)
+    //executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    //===================================================================================
+    // CAMINHO DO CHROME PARA LINUX (REMOVER O COMENTÁRIO ABAIXO)
+    executablePath: '/usr/bin/google-chrome-stable',
+    //===================================================================================
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -257,10 +256,11 @@ const criarSessao = function(id, token,ativo) {
   });
 
   client.on('ready', async () => {
-    io.emit('qr',{id: id, src:"img/check.svg"});
+    io.emit('qr',{id: id, src:"imgs/check.svg"});
     try {
       fs.unlinkSync(dirQrCode + '/' + id + '/qrcode.png');
     } catch(e){
+      console.log(e);
     }
 
     const savedSessions = carregarArquivoSessao();
@@ -277,148 +277,159 @@ const criarSessao = function(id, token,ativo) {
     io.emit('message', { id: id, text: 'Dispositivo autenticado!' });
   });
 
-  client.on('message', async(msg) => {
-    client.sendMessage(msg.from, "olá seja bem vindo");
+  client.on('message', async(msg) => {    
+
+    async function getDiaSemana(){
+      var dataAtual = new Date();
+      var diaDaSemana = dataAtual.getDay();
+      var nomeDia = "";
+
+      switch (diaDaSemana) {
+        case 0:
+          nomeDia = "DOMINGO";
+          break;
+        case 1:
+          nomeDia = "SEGUNDA"
+          break;
+        case 2:
+          nomeDia = "TERÇA";
+          break;
+        case 3:
+          nomeDia = "QUARTA";
+          break;
+        case 4:
+          nomeDia = "QUINTA";
+          break;
+        case 5:
+          nomeDia = "SEXTA";
+          break;
+        case 6:
+          nomeDia = "SABADO";
+          break;
+      }
+
+      return nomeDia;
+    }
+
+    async function formataHoraAtual(){
+
+      var dataAtual = new Date();
+      var horaAtual = dataAtual.getHours();
+      var minutoAtual = "";
+      var horaAtualAux = "";
+
+      if(horaAtual < 10){
+          horaAtualAux = "0" + horaAtual + ":" + minutoAtual;
+      }else{
+          horaAtualAux = horaAtual + ":" + minutoAtual;
+      }
+      return horaAtualAux;
+    }
+
+    async function validaFuncionamentoAbertoFechado(horaAtual, inicioExpediente,fimExpediente){
+       if (horaAtual >= inicioExpediente && horaAtual < fimExpediente){
+        return "Aberto";
+      }else{
+        return "Fechado";
+      }   
+    }
+
+    async function criaAtualizaContatoWhats(){
+      var nome = msg._data.notifyName;        
+      var celular = msg.from.replace(/\D/g, '');    
+      var dataSaudacaoAusencia = new Date();
     
-    // async function salvaContato(dados){
-    //   try{
+      result = await getContatos(celular);
 
-    //     nomeContato = msg._data.notifyName;        
-    //     const user = msg.from.replace(/\D/g, '');  
-    //     const getUserFrom = await getUser(user);    
-    //     const mensagemSaudacao = await getPeriod(cod_estabel);        
-    
-    //     const data_interacao = function dataAtualFormatada(){
-    //       var data = new Date(),
-    //           dia  = data.getDate().toString(),
-    //           diaF = (dia.length == 1) ? '0'+dia : dia,
-    //           mes  = (data.getMonth()+1).toString(), //+1 pois no getMonth Janeiro começa com zero.
-    //           mesF = (mes.length == 1) ? '0'+mes : mes,
-    //           anoF = data.getFullYear();
-    //       return anoF+"/"+mesF+"/"+diaF;
-    //     } 
+      if(result == "false"){
+        await postContatos(celular,nome, dataSaudacaoAusencia);
+      }      
+      return result;
+    }
 
-    //     if (getUserFrom === "false") { 
-    //       const data = new Date();  
-    //       await setUser(user, nomeContato, data, cod_estabel);
-          
-    //       if(dados == 1){
-    //         if (msg.body !== ""){
-    //           client.sendMessage(msg.from, mensagemSaudacao[1]);
-    //         }
-    //       }      
-    //     }else{   
-              
-    //       var day1 = new Date(getUserFrom);         
-    //       var day2 = new Date(data_interacao());
+    async function validaPeriodicidade(periodicidadeSaudacao,periodicidadeAusencia){
+      if(periodicidadeSaudacao < 0){
+        periodicidadeSaudacao = 0;
+      }
 
-    //       var difference= Math.abs(day2-day1);
-    //       var days = difference/(1000 * 3600 * 24)
+      if(periodicidadeAusencia < 0){
+        periodicidadeAusencia = 0;
+      }
+    }
 
-    //       if(Math.trunc(days) >= mensagemSaudacao[0]){
+    async function buscaMensagensDelivery(){
+      var mensagens = await getMensagens();
+      var mensUnica = "";
 
-    //         if(dados == 1){ 
-    //           client.sendMessage(msg.from, mensagemSaudacao[1]);
-    //         }
+      if(mensagens != "false"){
+        mensagens.forEach(function (pergResp){            
+          if(msg.body.toLocaleLowerCase().includes(pergResp.pergunta.toLocaleLowerCase())){
 
-    //         await updateDateUser(user, new Date());
-    //       }else{          
-    //           if(Math.trunc(days) !== 0){
-    //             await updateDateUser(user, new Date());
-    //           }          
-    //       }        
-    //     } 
-    //   }
-    //   catch(e){
-    //     console.log('Não foi possível armazenar o usuário' + e)
-    //   }    
-    
+            mensUnica = pergResp.resposta;              
+          }        
+        });         
+      }
+      return mensUnica;
+    }
 
-    // async function buscaMensagens(){
-    //   const mensagens = await getMens(cod_estabel);
-    //   var mensUnica = "";
+    async function getMensResposta (validaFuncionamento, periodicidadeSaudacao,periodicidadeAusencia, criaAtualizaContato, mensSaudacao, mensAusencia){
 
-    //   if(mensagens !== "false"){
-    //     mensagens.forEach(function (mensagens){
-    //       if(mensagens.status !== 'Inativo'){
-    //         if(msg.body.toLocaleLowerCase().includes(mensagens.pergunta.toLocaleLowerCase())){
+      const data_saudacao = new Date(criaAtualizaContato[0].data_saudacao);
+      const data_ausencia = new Date(criaAtualizaContato[0].data_ausencia);
+      const dataAtual = new Date();
+      const diferencaEmMilissegundosSaudacao = dataAtual - data_saudacao;
+      const diferencaEmMilissegundosAusencia = dataAtual - data_ausencia;
+      const diferencaEmDiasSaudacao = Math.floor(diferencaEmMilissegundosSaudacao / (1000 * 60 * 60 * 24));
+      const diferencaEmDiasAusencia = Math.floor(diferencaEmMilissegundosAusencia / (1000 * 60 * 60 * 24));
+      var mensUnica = "";
 
-    //           mensUnica = mensagens.resposta;
-              
-    //         }
-    //       }
-    //     });
+      const dateAtual = new Date();
 
-    //     if(mensUnica !== ""){
-    //       client.sendMessage(msg.from, mensUnica);
-    //     }       
-    //   }
-    // }
+      validaPeriodicidade(periodicidadeSaudacao,periodicidadeAusencia);
 
-    // async function horarioFunc(){
-    //   var dataAtual = new Date();
-    //   var diaDaSemana = dataAtual.getDay();
-    //   var nomeDia = "";
+      switch (validaFuncionamento) {
+        case 'Aberto':
+          if(periodicidadeSaudacao === diferencaEmDiasSaudacao){
+            client.sendMessage(msg.from, mensSaudacao);
+            await putContatos(criaAtualizaContato[0].celular, dateAtual, 'saudacao');
+          }
+          break;
+        case 'Fechado':
+          if(periodicidadeAusencia === diferencaEmDiasAusencia){
+            client.sendMessage(msg.from, mensAusencia);
+            await putContatos(criaAtualizaContato[0].celular, dateAtual, 'ausencia');
+          }
+          break;       
+      }  
 
-    //   switch (diaDaSemana) {
-    //     case 0:
-    //       nomeDia = "domingos";
-    //       break;
-    //     case 1:
-    //       nomeDia = "segundas"
-    //       break;
-    //     case 2:
-    //       nomeDia = "tercas";
-    //       break;
-    //     case 3:
-    //       nomeDia = "quartas";
-    //       break;
-    //     case 4:
-    //       nomeDia = "quintas";
-    //       break;
-    //     case 5:
-    //       nomeDia = "sextas";
-    //       break;
-    //     case 6:
-    //       nomeDia = "sabados";
-    //       break;
-    //   }
+      mensUnica = await buscaMensagensDelivery();
 
-    //   const hrsFunc = await getHorarioFunc(cod_estabel, nomeDia);
+      if(mensUnica !== ""){
+        client.sendMessage(msg.from, mensUnica);
+      }      
+    }
 
-    //   const date = new Date();
-    //   const horaAtual = date.getHours();
-    //   var  atual = "";
-
-    //   if(horaAtual < 10){
-    //          atual = "0" + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-    //   }else{
-    //          atual = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-    //   }
-    //   const inicioAtendimento = hrsFunc[0].inicio;
-    //   const paradaAtendimento = hrsFunc[0].pausa;
-    //   const retornoAtendimento = hrsFunc[0].retorno;
-    //   const fimAtendimento = hrsFunc[0].fim;
-    //   const mensAusencia = await getAusencia(cod_estabel); 
+    async function msgRetorno(){
+      var diaDaSemana = await getDiaSemana();
+      var funcionamento_deliveries = await getHorarioFunc(diaDaSemana);
+      var inicioExpediente = funcionamento_deliveries[0].inicio_expediente;
+      var fimExpediente = funcionamento_deliveries[0].fim_expediente;
+      var horaAtual = await formataHoraAtual();
+      var mensSaudacaoAusencia = await getSaudacaoAusencia(); 
+      var periodicidadeSaudacao = mensSaudacaoAusencia[0].periodicidadeSaudacao;
+      var mensSaudacao = mensSaudacaoAusencia[0].saudacao;
+      var periodicidadeAusencia = mensSaudacaoAusencia[0].periodicidadeAusencia;
+      var mensAusencia = mensSaudacaoAusencia[0].ausencia;
+      var validaFuncionamento = await validaFuncionamentoAbertoFechado(horaAtual,inicioExpediente,fimExpediente);
+      var criaAtualizaContato = await criaAtualizaContatoWhats();
       
-    //   if(mensAusencia == 'false'){
-    //     mensAusencia = '';
-    //   }
+      await getMensResposta(validaFuncionamento, periodicidadeSaudacao, periodicidadeAusencia, criaAtualizaContato, mensSaudacao, mensAusencia);
+    }
 
-    //   if (atual.substring(0,5) >= inicioAtendimento && atual.substring(0,5) < paradaAtendimento || (atual.substring(0,5) >= retornoAtendimento && atual.substring(0,5) < fimAtendimento)){
-    //       salvaContato(1); //1- retorna mensagem saudação 2- retorna mensagem estabelecimento fechado 
-    //       buscaMensagens();
-    //   }else{
-    //     salvaContato(2); 
-    //     client.sendMessage(msg.from, mensAusencia);
-    //   }     
-    // }
-
-    // if (msg.body !== null && !msg.from.includes('@g.us') && msg.type.toLocaleLowerCase() !== "ciphertext" && msg.type.toLocaleLowerCase() !== "e2e_notification" && msg.type.toLocaleLowerCase() !== ""){
+    if (msg.body !== null && !msg.from.includes('@g.us') && msg.type.toLocaleLowerCase() !== "ciphertext" && msg.type.toLocaleLowerCase() !== "e2e_notification" && msg.type.toLocaleLowerCase() !== ""){
       
-    //   horarioFunc();
-      
-    // }
+      msgRetorno();         
+    }
 });
 
   client.on('auth_failure', function() {
@@ -427,11 +438,11 @@ const criarSessao = function(id, token,ativo) {
 
   client.on('disconnected', (reason) => {
 
-    io.emit('message', { id: id, text: 'Dispositivo desconectado!' });
+    // io.emit('message', { id: id, text: 'Dispositivo desconectado!' });
     client.destroy();
     client.initialize();
 
-    const savedSessions = carregarArquivoSessao();
+    const savedSessions = carregarArquivoSessao();    
     const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
     savedSessions.splice(sessionIndex, 1);
     setarArquivoSessao(savedSessions);
