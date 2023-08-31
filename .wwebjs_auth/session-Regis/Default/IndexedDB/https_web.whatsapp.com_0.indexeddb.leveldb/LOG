@@ -1,0 +1,22 @@
+2023/08/31-10:07:52.099 4214 Reusing MANIFEST C:\Users\willi\OneDrive\Documentos\Alavancaweb\Projetos\apiwhats\.wwebjs_auth\session-Regis\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/08/31-10:07:52.099 4214 Recovering log #131
+2023/08/31-10:07:52.120 4214 Reusing old log C:\Users\willi\OneDrive\Documentos\Alavancaweb\Projetos\apiwhats\.wwebjs_auth\session-Regis\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000131.log 
+2023/08/31-14:10:03.664 89d8 Level-0 table #141: started
+2023/08/31-14:10:03.695 89d8 Level-0 table #141: 1272966 bytes OK
+2023/08/31-14:10:03.697 89d8 Delete type=0 #131
+2023/08/31-14:19:19.163 4214 Compacting 1@1 + 6@2 files
+2023/08/31-14:19:19.223 4214 Generated table #142@1: 51022 keys, 2247331 bytes
+2023/08/31-14:19:19.262 4214 Generated table #143@1: 12248 keys, 2171077 bytes
+2023/08/31-14:19:19.316 4214 Generated table #144@1: 22732 keys, 2212679 bytes
+2023/08/31-14:19:19.359 4214 Generated table #145@1: 46107 keys, 2195764 bytes
+2023/08/31-14:19:19.448 4214 Generated table #146@1: 111109 keys, 2261971 bytes
+2023/08/31-14:19:19.458 4214 Generated table #147@1: 12003 keys, 249746 bytes
+2023/08/31-14:19:19.458 4214 Compacted 1@1 + 6@2 files => 11338568 bytes
+2023/08/31-14:19:19.459 4214 compacted to: files[ 0 0 6 0 0 0 0 ]
+2023/08/31-14:19:19.460 4214 Delete type=2 #133
+2023/08/31-14:19:19.461 4214 Delete type=2 #134
+2023/08/31-14:19:19.461 4214 Delete type=2 #135
+2023/08/31-14:19:19.461 4214 Delete type=2 #136
+2023/08/31-14:19:19.461 4214 Delete type=2 #137
+2023/08/31-14:19:19.461 4214 Delete type=2 #138
+2023/08/31-14:19:19.461 4214 Delete type=2 #141

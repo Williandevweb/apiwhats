@@ -21,24 +21,24 @@ function delay(t, v) {
 }
 
 //##Configuração Local
-// const createConnection = async () => {
-// 	return await mysql.createConnection({
-// 		host: 'localhost',
-// 		user: 'root',
-// 		password: '',
-// 		database: 'alavanca_WSystem'   
-// 	});
-// }
-
-//## Configuração VPS
 const createConnection = async () => {
 	return await mysql.createConnection({
 		host: 'localhost',
-		user: 'alavanca_wsystem',
-		password: 'y53X6Y8pk^wX',
-		database: 'alavanca_wsystem'   
+		user: 'root',
+		password: '',
+		database: 'alavanca_WSystem'   
 	});
 }
+
+//## Configuração VPS
+// const createConnection = async () => {
+// 	return await mysql.createConnection({
+// 		host: 'localhost',
+// 		user: 'alavanca_wsystem',
+// 		password: 'y53X6Y8pk^wX',
+// 		database: 'alavanca_wsystem'   
+// 	});
+// }
 
 if (!fs.existsSync(dirQrCode)){
   fs.mkdirSync(dirQrCode)
@@ -121,14 +121,20 @@ const getContatos = async (celular) => {
   }
 }
 
-const postContatos = async (celular, nome, data) => {
+const postContatos = async (celular, nome, data, tipoSaudacaoAusencia) => {
 	const connection = await createConnection();
-  const [rows] = await connection.execute('INSERT INTO `whats_app_contatos` (`id`,`nome`, `celular`, `data_saudacao`, `data_ausencia`) VALUES (NULL,?,?,?,?)', [nome,celular,data,data]);                             
+  var rows = [];
+  if(tipoSaudacaoAusencia == 'saudacao'){
+    rows = await connection.execute('INSERT INTO `whats_app_contatos` (`id`,`nome`, `celular`, `data_saudacao`, `data_ausencia`) VALUES (NULL,?,?,?,null)', [nome,celular,data]);                             
+  }
+  else{
+    rows = await connection.execute('INSERT INTO `whats_app_contatos` (`id`,`nome`, `celular`, `data_saudacao`, `data_ausencia`) VALUES (NULL,?,?,null,?)', [nome,celular,data]);
+  }
   delay(1000).then(async function() {
-    connection.end();
-   delay(500).then(async function() {
-      connection.destroy();
-   });
+  connection.end();
+  delay(500).then(async function() {
+    connection.destroy();
+  });
  });
  if (rows.length > 0) { 
   return "true";
@@ -208,13 +214,13 @@ const criarSessao = function(id, token,ativo) {
     puppeteer: {
       headless: true,
     // CAMINHO DO CHROME PARA WINDOWS (REMOVER O COMENTÁRIO ABAIXO)
-    //executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     //===================================================================================
     // CAMINHO DO CHROME PARA MAC (REMOVER O COMENTÁRIO ABAIXO)
     //executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     //===================================================================================
     // CAMINHO DO CHROME PARA LINUX (REMOVER O COMENTÁRIO ABAIXO)
-    executablePath: '/usr/bin/google-chrome-stable',
+    // executablePath: '/usr/bin/google-chrome-stable',
     //===================================================================================
       args: [
         '--no-sandbox',
@@ -315,7 +321,7 @@ const criarSessao = function(id, token,ativo) {
 
       var dataAtual = new Date();
       var horaAtual = dataAtual.getHours();
-      var minutoAtual = "";
+      var minutoAtual = dataAtual.getMinutes();
       var horaAtualAux = "";
 
       if(horaAtual < 10){
@@ -332,19 +338,6 @@ const criarSessao = function(id, token,ativo) {
       }else{
         return "Fechado";
       }   
-    }
-
-    async function criaAtualizaContatoWhats(){
-      var nome = msg._data.notifyName;        
-      var celular = msg.from.replace(/\D/g, '');    
-      var dataSaudacaoAusencia = new Date();
-    
-      result = await getContatos(celular);
-
-      if(result == "false"){
-        await postContatos(celular,nome, dataSaudacaoAusencia);
-      }      
-      return result;
     }
 
     async function validaPeriodicidade(periodicidadeSaudacao,periodicidadeAusencia){
@@ -372,46 +365,92 @@ const criarSessao = function(id, token,ativo) {
       return mensUnica;
     }
 
-    async function getMensResposta (validaFuncionamento, periodicidadeSaudacao,periodicidadeAusencia, criaAtualizaContato, mensSaudacao, mensAusencia){
+    async function getMensResposta (validaFuncionamento, periodicidadeSaudacao,periodicidadeAusencia, mensSaudacao, mensAusencia){
+      
+      var data_saudacao = new Date();
+      var data_ausencia = new Date();
+      const celular = msg.from.replace(/\D/g, '');    
+      const nome = msg._data.notifyName;        
 
-      const data_saudacao = new Date(criaAtualizaContato[0].data_saudacao);
-      const data_ausencia = new Date(criaAtualizaContato[0].data_ausencia);
-      const dataAtual = new Date();
-      const diferencaEmMilissegundosSaudacao = dataAtual - data_saudacao;
-      const diferencaEmMilissegundosAusencia = dataAtual - data_ausencia;
+      var result = await getContatos(celular);
+      if(result != "false"){
+        if(result[0].data_saudacao != null){
+          data_saudacao = new Date(result[0].data_saudacao);
+        }
+        if(result[0].data_ausencia != null){            
+          data_ausencia = new Date(result[0].data_ausencia);
+        }        
+      }
+         
+      const dataSaudacaoAusencia = new Date();          
+      const diferencaEmMilissegundosSaudacao = dataSaudacaoAusencia - data_saudacao;
+      const diferencaEmMilissegundosAusencia = dataSaudacaoAusencia - data_ausencia;    
       const diferencaEmDiasSaudacao = Math.floor(diferencaEmMilissegundosSaudacao / (1000 * 60 * 60 * 24));
       const diferencaEmDiasAusencia = Math.floor(diferencaEmMilissegundosAusencia / (1000 * 60 * 60 * 24));
       var mensUnica = "";
-
-      const dateAtual = new Date();
+      var ctrlMensAusencia = false;
 
       validaPeriodicidade(periodicidadeSaudacao,periodicidadeAusencia);
 
       switch (validaFuncionamento) {
-        case 'Aberto':
-          if(periodicidadeSaudacao === diferencaEmDiasSaudacao){
+        case 'Aberto':          
+          if(result == "false"){
             client.sendMessage(msg.from, mensSaudacao);
-            await putContatos(criaAtualizaContato[0].celular, dateAtual, 'saudacao');
+            await postContatos(celular,nome, dataSaudacaoAusencia, 'saudacao');
+          }else{
+            if(result[0].data_saudacao == null){
+              client.sendMessage(msg.from, mensSaudacao);
+              await putContatos(celular, dataSaudacaoAusencia, 'saudacao');
+            }else{
+              if(periodicidadeSaudacao <= 0){
+                client.sendMessage(msg.from, mensSaudacao);
+                await putContatos(celular, dataSaudacaoAusencia, 'saudacao');
+              }else{
+                if(periodicidadeSaudacao <= diferencaEmDiasSaudacao){
+                  client.sendMessage(msg.from, mensSaudacao);
+                  await putContatos(celular, dataSaudacaoAusencia, 'saudacao');
+                }
+              }    
+            }        
           }
           break;
         case 'Fechado':
-          if(periodicidadeAusencia === diferencaEmDiasAusencia){
+          ctrlMensAusencia = true;
+          result = await getContatos(celular);
+          if(result == "false"){
             client.sendMessage(msg.from, mensAusencia);
-            await putContatos(criaAtualizaContato[0].celular, dateAtual, 'ausencia');
+            await postContatos(celular,nome, dataSaudacaoAusencia, 'ausencia');
+          }else{
+            if(result[0].data_ausencia == null){
+              client.sendMessage(msg.from, mensAusencia);
+              await putContatos(celular, dataSaudacaoAusencia, 'ausencia');
+            }else{
+              if(periodicidadeAusencia <= 0){
+                client.sendMessage(msg.from, mensAusencia);
+                await putContatos(celular, dataSaudacaoAusencia, 'ausencia');
+              }else{
+                if(periodicidadeAusencia <= diferencaEmDiasAusencia){
+                  client.sendMessage(msg.from, mensAusencia);
+                  await putContatos(celular, dataSaudacaoAusencia, 'ausencia');
+                }
+              }            
+            }
           }
-          break;       
+          break;                 
       }  
 
-      mensUnica = await buscaMensagensDelivery();
+      if(!ctrlMensAusencia){
+        mensUnica = await buscaMensagensDelivery();
+      }
 
-      if(mensUnica !== ""){
+      if(mensUnica != ""){
         client.sendMessage(msg.from, mensUnica);
       }      
     }
 
     async function msgRetorno(){
       var diaDaSemana = await getDiaSemana();
-      var funcionamento_deliveries = await getHorarioFunc(diaDaSemana);
+      var funcionamento_deliveries = await getHorarioFunc(diaDaSemana);     
       var inicioExpediente = funcionamento_deliveries[0].inicio_expediente;
       var fimExpediente = funcionamento_deliveries[0].fim_expediente;
       var horaAtual = await formataHoraAtual();
@@ -420,14 +459,10 @@ const criarSessao = function(id, token,ativo) {
       var mensSaudacao = mensSaudacaoAusencia[0].saudacao;
       var periodicidadeAusencia = mensSaudacaoAusencia[0].periodicidadeAusencia;
       var mensAusencia = mensSaudacaoAusencia[0].ausencia;
-      var validaFuncionamento = await validaFuncionamentoAbertoFechado(horaAtual,inicioExpediente,fimExpediente);
-      var criaAtualizaContato = await criaAtualizaContatoWhats();
-      
-      await getMensResposta(validaFuncionamento, periodicidadeSaudacao, periodicidadeAusencia, criaAtualizaContato, mensSaudacao, mensAusencia);
+      var validaFuncionamento = await validaFuncionamentoAbertoFechado(horaAtual,inicioExpediente,fimExpediente);      
+      await getMensResposta(validaFuncionamento, periodicidadeSaudacao, periodicidadeAusencia, mensSaudacao, mensAusencia);
     }
-
     if (msg.body !== null && !msg.from.includes('@g.us') && msg.type.toLocaleLowerCase() !== "ciphertext" && msg.type.toLocaleLowerCase() !== "e2e_notification" && msg.type.toLocaleLowerCase() !== ""){
-      
       msgRetorno();         
     }
 });
@@ -437,8 +472,6 @@ const criarSessao = function(id, token,ativo) {
   });
 
   client.on('disconnected', (reason) => {
-
-    // io.emit('message', { id: id, text: 'Dispositivo desconectado!' });
     client.destroy();
     client.initialize();
 
@@ -569,6 +602,66 @@ app.post('/chamado', [
     });
     });
 });
+
+app.post('/statusPedidos', [
+  body('user').notEmpty(),
+  body('message').notEmpty(),
+], async (req, res) => {
+  
+  const errors = validationResult(req).formatWith(({
+    msg
+  }) => {
+    return msg;
+  });
+
+  if (!errors.isEmpty()) {
+    return res.status(422).json({
+      status: false,
+      message: errors.mapped()
+    });
+  }
+
+  const sender = req.body.sender.replace(/\s/g, '');
+  const foundSession = sessions.find(sess => sess.id === sender);
+  const client = foundSession ? foundSession.client : undefined;
+  if (!client) {
+    return res.status(422).json({
+      status: false,
+      message: `Sender: ${sender} não foi encontrado!`
+    })
+  }
+
+  const token = req.body.token;
+  const savedSessions = carregarArquivoSessao();
+  const sessionIndex = savedSessions.findIndex(sess => sess.id == sender);
+  const tokenN = savedSessions.splice(sessionIndex, 1)[0].token;
+
+  if(tokenN !== token){
+    res.status(422).json({
+      status: false,
+      message: 'Token inválido'
+    })
+    return;
+  }
+
+  const user = req.body.user + '@c.us';
+  const message = req.body.message;
+
+    client.sendMessage(user, message).then(response => {
+    res.status(200).json({
+      status: true,
+      message: 'Mensagem enviada',
+      response: response
+    });
+    }).catch(err => {
+    res.status(500).json({
+      status: false,
+      message: 'Mensagem não enviada',
+      response: err.text
+    });
+    });
+});
+
 
 server.listen(port, function() {
   console.log('Aplicação rodando na porta *: ' + port);
